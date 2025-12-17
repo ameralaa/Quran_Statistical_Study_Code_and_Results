@@ -1,0 +1,2 @@
+sim_file,slope,r2,entropy_words,entropy_chars,autocorr_lag1,hurst,model,sim
+markov_word_sim_029.txt,-2.557907507346742,0.960096838588251,5.285904790710733,4.53837714036482,0.47573478828452603,0.8810988080059418,markov_word,29

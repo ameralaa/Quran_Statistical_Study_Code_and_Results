@@ -1,0 +1,10 @@
+{
+  "n_verses": 6236,
+  "n_tokens": 80592,
+  "word_length_summary": {
+    "n_tokens": 80592,
+    "mean_len": 3.977355072463768,
+    "median_len": 4.0,
+    "std_len": 1.5632554428487724
+  }
+}

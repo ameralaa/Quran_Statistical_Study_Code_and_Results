@@ -1,0 +1,9 @@
+{
+  "n_tokens": 289817,
+  "obs_stat_var_diac_per_sura": 0.0010531632514177173,
+  "perm_K": 5000,
+  "perm_p_emp": 1.0,
+  "markov_sims": 1000,
+  "markov_p_emp": 0.0,
+  "bootstrap_n": 2000
+}

@@ -1,0 +1,12 @@
+{
+  "n_models": 4,
+  "metrics_tested": [
+    "slope",
+    "r2",
+    "entropy_words",
+    "entropy_chars",
+    "autocorr_lag1",
+    "hurst"
+  ],
+  "n_rows_pvalues": 24
+}

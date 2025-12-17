@@ -1,0 +1,13 @@
+pandas
+numpy
+matplotlib
+python-bidi
+arabic-reshaper
+regex
+wordcloud
+python-docx
+seaborn
+scipy
+scikit-learn 
+python-Levenshtein
+umap-learn

@@ -1,0 +1,2 @@
+sim_file,slope,r2,entropy_words,entropy_chars,autocorr_lag1,hurst,model,sim
+poisson_wordcounts_sim_027.txt,-3.7823272517901088,0.9192938414145628,5.169333345513205,4.517040084262678,0.0021363837998723658,0.5434431006902678,poisson_wordcounts,27

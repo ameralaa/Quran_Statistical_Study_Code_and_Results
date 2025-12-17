@@ -1,0 +1,13 @@
+{
+  "features_used": [
+    "n_chars",
+    "n_chars_no_diac",
+    "n_words"
+  ],
+  "zscore_threshold": 3,
+  "iso_contamination": 0.02,
+  "lof_contamination": 0.02,
+  "n_anomalies_zscore": 113,
+  "n_anomalies_iso": 125,
+  "n_anomalies_lof": 125
+}

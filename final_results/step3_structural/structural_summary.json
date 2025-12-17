@@ -1,0 +1,7 @@
+{
+  "n_suras": 114,
+  "sura_stats_path": "final_results\\step3_structural\\sura_metrics.csv",
+  "corr_matrix_path": "final_results\\step3_structural\\sura_length_correlation_matrix.csv",
+  "cosine_sim_path": "final_results\\step3_structural\\sura_word_cosine_similarity.csv",
+  "fractal_dim_estimate": 0.9931069182057547
+}

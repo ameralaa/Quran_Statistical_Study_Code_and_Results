@@ -1,0 +1,2 @@
+sim_file,slope,r2,entropy_words,entropy_chars,autocorr_lag1,hurst,model,sim
+char_shuffle_sim_025.txt,-1.169390741178414,0.9919052654977771,9.314601889626976,4.7355376216593195,0.47491778284681213,0.8863068304759495,char_shuffle,25
