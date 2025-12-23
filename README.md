@@ -118,7 +118,6 @@ The pipeline utilizes a robust suite of methods:
 
 *Note: This repository is intended for academic research in Quantitative Linguistics and Digital Humanities.*
 
-```
 
 
 
