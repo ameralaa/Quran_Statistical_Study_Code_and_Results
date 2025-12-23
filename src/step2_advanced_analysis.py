@@ -21,8 +21,7 @@ with open(RESULTS / 'step1_preprocess' / 'summary.json', 'r', encoding='utf-8') 
     summary = json.load(f)
 
 # ---------- load word freq ----------
-word_df = pd.read_csv(RESULTS / 'step1_preprocess' / 'word_freq.csv', encoding='utf-8')  # columns: word,count
-# Ensure sorted
+word_df = pd.read_csv(RESULTS / 'step1_preprocess' / 'word_freq.csv', encoding='utf-8')
 word_df = word_df.sort_values('count', ascending=False).reset_index(drop=True)
 word_df['rank'] = word_df.index + 1
 
@@ -31,121 +30,135 @@ top30 = word_df.head(30)
 top30.to_csv(OUTPUT / 'top30_words.csv', index=False, encoding='utf-8')
 
 # ---------- Zipf plot ----------
-ranks = top30['rank']  # for plotting use full list though
 freqs = word_df['count'].values
 ranks_full = word_df['rank'].values
 
 plt.figure(figsize=(8,6))
-plt.loglog(ranks_full, freqs, marker='.', linestyle='none')
+plt.loglog(ranks_full, freqs, marker='.', linestyle='none', color='blue', alpha=0.6)
 plt.xlabel('Rank (log)')
 plt.ylabel('Frequency (log)')
-plt.title('Zipf plot (full)')
+plt.title('Zipf Law Distribution (Full Corpus)')
+plt.grid(True, which="both", ls="-", alpha=0.2)
 plt.tight_layout()
 plt.savefig(OUTPUT / 'zipf_full.png')
 plt.close()
 
 # ---------- Fit power-law (Zipf) on middle region ----------
-# choose region: exclude top 20 (stopwords heavy) and tail after rank 10000
 lo, hi = 20, min(2000, len(word_df))
-x = np.log(word_df['rank'].iloc[lo:hi].values).reshape(-1,1)
-y = np.log(word_df['count'].iloc[lo:hi].values)
-model = LinearRegression().fit(x, y)
-slope = model.coef_[0]
-intercept = model.intercept_
-r2 = model.score(x, y)
-fit_summary = {'slope': float(slope), 'intercept': float(intercept), 'r2': float(r2), 'fit_reg_range': [int(lo+1), int(hi)]}
+x_zipf = np.log(word_df['rank'].iloc[lo:hi].values).reshape(-1,1)
+y_zipf = np.log(word_df['count'].iloc[lo:hi].values)
+model_zipf = LinearRegression().fit(x_zipf, y_zipf)
+slope = model_zipf.coef_[0]
+r2 = model_zipf.score(x_zipf, y_zipf)
+fit_summary = {'slope': float(slope), 'intercept': float(model_zipf.intercept_), 'r2': float(r2), 'fit_reg_range': [int(lo+1), int(hi)]}
 
-# residuals and KS test against power-law fit
-pred = model.predict(x)
-residuals = y - pred
-# normality test of residuals (Shapiro or KS)
+# Residuals analysis
+pred = model_zipf.predict(x_zipf)
+residuals = y_zipf - pred
 ks_stat, ks_p = stats.kstest(residuals, 'norm', args=(residuals.mean(), residuals.std()))
 
-# ---------- Shannon entropy for words and chars ----------
+# ---------- Shannon entropy ----------
 counts_words = word_df['count'].values
 p_words = counts_words / counts_words.sum()
 entropy_words = -np.sum(p_words * np.log2(p_words))
 
-char_df = pd.read_csv(RESULTS /  'step1_preprocess' / 'char_freq_without_diacritics.csv', encoding='utf-8')
+char_df = pd.read_csv(RESULTS / 'step1_preprocess' / 'char_freq_without_diacritics.csv', encoding='utf-8')
 counts_chars = char_df['count'].values
 p_chars = counts_chars / counts_chars.sum()
 entropy_chars = -np.sum(p_chars * np.log2(p_chars))
 
-# ---------- Autocorrelation for token sequence lengths per verse ----------
-verse_df = pd.read_csv(RESULTS /  'step1_preprocess' / 'verse_metrics.csv', encoding='utf-8')
+# ---------- Autocorrelation ----------
+verse_df = pd.read_csv(RESULTS / 'step1_preprocess' / 'verse_metrics.csv', encoding='utf-8')
 series = verse_df['n_words'].values - verse_df['n_words'].mean()
 def autocorr(x, lag):
     return np.corrcoef(x[:-lag], x[lag:])[0,1]
 autocorrs = {lag: autocorr(series, lag) for lag in range(1, 31)}
 
-# ---------- Hurst exponent (rescaled range) simple estimator ----------
-def hurst_exponent(ts):
+# ---------- Hurst Exponent & Visualization ----------
+def calculate_and_plot_hurst(ts, output_path):
     N = len(ts)
-    T = np.arange(1, N+1)
-    Y = np.cumsum(ts - np.mean(ts))
-    R = np.maximum.accumulate(Y) - np.minimum.accumulate(Y)
-    S = pd.Series(ts).rolling(window=N).std().iloc[-1] if N>1 else 0
-    # Use a very simple approximation via rescaled range over splits
-    def rs(n):
-        x = ts[:n]
-        y = np.cumsum(x - x.mean())
-        R = y.max() - y.min()
-        S = x.std(ddof=1) if n>1 else 0
-        return R / S if S!=0 else 0
-    sizes = [int(N / k) for k in range(2, min(20,N//2))]
+    max_k = int(np.floor(np.log2(N)))
+    # Create lags (sizes) on a log scale
+    sizes = np.unique(np.floor(np.logspace(np.log10(10), np.log10(N/2), 15)).astype(int))
     rsvals = []
-    sizes_clean = []
+    
     for s in sizes:
-        val = rs(s)
-        if val>0:
-            rsvals.append(val)
-            sizes_clean.append(s)
-    if len(rsvals) < 2:
-        return float('nan')
-    # fit log(R/S) ~ H * log(n)
-    lr = LinearRegression().fit(np.log(sizes_clean).reshape(-1,1), np.log(rsvals))
-    return float(lr.coef_[0])
+        # Split series into chunks of size s
+        num_chunks = N // s
+        rescaled_ranges = []
+        for i in range(num_chunks):
+            chunk = ts[i*s : (i+1)*s]
+            mean_adj = chunk - np.mean(chunk)
+            cum_sum = np.cumsum(mean_adj)
+            R = np.max(cum_sum) - np.min(cum_sum)
+            S = np.std(chunk, ddof=1)
+            if S > 0:
+                rescaled_ranges.append(R / S)
+        if rescaled_ranges:
+            rsvals.append(np.mean(rescaled_ranges))
+    
+    # Fit log-log
+    log_sizes = np.log(sizes[:len(rsvals)]).reshape(-1,1)
+    log_rs = np.log(rsvals)
+    hurst_model = LinearRegression().fit(log_sizes, log_rs)
+    H = hurst_model.coef_[0]
 
-hurst = hurst_exponent(verse_df['n_words'].values)
+    # Plotting
+    plt.figure(figsize=(8,5))
+    plt.loglog(sizes[:len(rsvals)], rsvals, 'bo', label='Measured R/S')
+    plt.loglog(sizes[:len(rsvals)], np.exp(hurst_model.predict(log_sizes)), 'r-', label=f'Hurst Fit (H={H:.3f})')
+    plt.xlabel('Lag (n)')
+    plt.ylabel('Rescaled Range (R/S)')
+    plt.title('Hurst Exponent Analysis (Rescaled Range Analysis)')
+    plt.legend()
+    plt.grid(True, which="both", ls="-", alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(output_path / 'hurst_analysis.png')
+    plt.close()
+    return float(H)
 
-# ---------- Save numeric summary ----------
+hurst_val = calculate_and_plot_hurst(verse_df['n_words'].values, OUTPUT)
+
+# ---------- Save Summary JSON ----------
 adv_summary = {
     'zipf_fit': fit_summary,
     'zipf_fit_ks_residuals': {'ks_stat': float(ks_stat), 'ks_p': float(ks_p)},
     'entropy_words': float(entropy_words),
     'entropy_chars': float(entropy_chars),
     'autocorr_first_10': {str(k): float(v) for k,v in list(autocorrs.items())[:10]},
-    'hurst': hurst
+    'hurst': hurst_val
 }
 with open(OUTPUT / 'advanced_summary.json', 'w', encoding='utf-8') as f:
     json.dump(adv_summary, f, ensure_ascii=False, indent=2)
 
-# ---------- Plots for fit diagnostics ----------
-# residuals histogram
-plt.figure(figsize=(8,5))
-plt.hist(residuals, bins=60)
-plt.title('Residuals of Zipf log-log linear fit (middle region)')
-plt.tight_layout()
-plt.savefig(OUTPUT / 'zipf_residuals_hist.png')
-plt.close()
-
-# ---------- assemble docx report ----------
+# ---------- Assemble English DOCX Report ----------
 doc = docx.Document()
-doc.add_heading('التحليل الإحصائي المتقدّم للنص القرآني', level=1)
-doc.add_paragraph(f"المصدر: الملف المعالج في results/ (نُزِّلَ في هذه الجلسة). عدد الآيات: {summary['n_verses']}, عدد الكلمات: {summary['n_tokens']}.")
-doc.add_heading('1. Zipf analysis', level=2)
-doc.add_paragraph(f"تم ملاءمة نموذج خطي على لوغاريتمات الرتبة والتردد في النطاق {fit_summary['fit_reg_range']}. قيمة الميل (slope) = {fit_summary['slope']:.4f}, R^2 = {fit_summary['r2']:.4f}.")
-doc.add_picture(str(OUTPUT / 'zipf_full.png'), width=Inches(6))
-doc.add_heading('2. Entropy', level=2)
-doc.add_paragraph(f"Shannon entropy (words): {entropy_words:.4f} bits; (chars): {entropy_chars:.4f} bits.")
-doc.add_heading('3. Autocorrelation (عدد الكلمات في الآيات)', level=2)
-doc.add_paragraph("autocorrelation for lags 1..10:")
+doc.add_heading('Advanced Statistical Analysis of the Quranic Text', level=1)
+doc.add_paragraph(f"Source: Preprocessed data from results/ folder. Total Verses: {summary['n_verses']}, Total Tokens: {summary['n_tokens']}.")
+
+doc.add_heading('1. Zipf Law Analysis', level=2)
+doc.add_paragraph(f"A linear model was fitted to log-ranks and log-frequencies in the range {fit_summary['fit_reg_range']}.")
+doc.add_paragraph(f"Slope (alpha): {fit_summary['slope']:.4f}, R-squared: {fit_summary['r2']:.4f}")
+doc.add_picture(str(OUTPUT / 'zipf_full.png'), width=Inches(5.5))
+
+doc.add_heading('2. Information Theory Metrics (Entropy)', level=2)
+doc.add_paragraph(f"Shannon Entropy (Words): {entropy_words:.4f} bits")
+doc.add_paragraph(f"Shannon Entropy (Characters): {entropy_chars:.4f} bits")
+
+doc.add_heading('3. Long-Range Dependency & Hurst Exponent', level=2)
+doc.add_paragraph(f"Estimated Hurst Exponent (H): {hurst_val:.4f}")
+doc.add_paragraph("Interpretation: A value H > 0.5 indicates strong persistence and long-range structural memory.")
+doc.add_picture(str(OUTPUT / 'hurst_analysis.png'), width=Inches(5.5))
+
+doc.add_heading('4. Autocorrelation Analysis', level=2)
+doc.add_paragraph("Autocorrelation of verse lengths (lags 1-10):")
 for k in range(1,11):
-    doc.add_paragraph(f"lag {k}: {autocorrs[k]:.4f}")
-doc.add_heading('4. Hurst exponent (επισκόπηση)', level=2)
-doc.add_paragraph(f"Estimated Hurst exponent (n_words series): {hurst:.4f}")
-doc.add_heading('5. ملاحظات حول الانحرافات الإحصائية', level=2)
-doc.add_paragraph("ملف advanced_summary.json يحتوي على النتائج الرقمية التفصيلية. انحرافات عن Zipf أو قيم غير اعتيادية ستُحلل لاحقًا في صفحة 'anomaly detection'.")
+    doc.add_paragraph(f"Lag {k}: {autocorrs[k]:.4f}")
+
+doc.add_heading('5. Statistical Residuals & Anomaly Notes', level=2)
+doc.add_paragraph("Full numerical data is available in 'advanced_summary.json'. The Kolmogorov-Smirnov test on Zipf residuals yielded:")
+doc.add_paragraph(f"KS-Statistic: {ks_stat:.4f}, p-value: {ks_p:.4f}")
+
 doc.save(OUTPUT / 'advanced_report.docx')
 
-print("Done. Outputs in:", OUTPUT)
+print("Done. English report and Hurst plot generated in:", OUTPUT)
