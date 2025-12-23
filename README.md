@@ -1,16 +1,16 @@
-📘 Statistical & Structural Analysis of the Quranic Text
+## 📘 Statistical & Structural Analysis of the Quranic Text
 
 > **A Multi-Scale Quantitative Study of Uthmani Orthography, Long-Range Dependencies, and Statistical Control.**
 
 ---
 
-🧾 Project Overview
+## 🧾 Project Overview
 
 This project presents a **fully reproducible, multi-stage computational pipeline** to analyze the Quranic text in its **complete Uthmani orthography**. Unlike standard NLP studies, this analysis accounts for every diacritic, pause symbol, and orthographic variant (e.g., Alif Khanjariya).
 
 The core objective is to determine if the **linguistic–statistical regularities** of the Quran can be explained by simple human processes, or if they represent a **highly optimized, multi-scale system** that challenges the limits of conventional text generation.
 
-🔬 Key Scientific Findings
+## 🔬 Key Scientific Findings
 * **Zipf’s Law:** Near-perfect fit ($R^2 = 0.9972$), indicating a highly optimized linguistic distribution.
 * **Long-Range Dependency:** A high **Hurst Exponent (0.884)**, suggesting a deep structural "memory" across the entire text.
 * **Orthographic Integrity:** 5,000+ Null-model simulations (p-value < 0.001) prove that the distribution of diacritics is statistically distinct from random or post-hoc additions.
@@ -52,7 +52,7 @@ project_root/
 ```
 
 
-🔄 Analysis Pipeline
+## 🔄 Analysis Pipeline
 
 The analysis is implemented across **8 execution steps** for full auditability:
 
@@ -69,7 +69,7 @@ The analysis is implemented across **8 execution steps** for full auditability:
 
 ---
 
-🧠 Scientific Principles
+## 🧠 Scientific Principles
 
 * **Reproducibility:** Every chart and p-value can be regenerated with one command.
 * **Zero-Assumption:** The study relies purely on mathematical metrics (No theological bias).
@@ -77,16 +77,16 @@ The analysis is implemented across **8 execution steps** for full auditability:
 
 ---
 
-▶️ Getting Started
+## ▶️ Getting Started
 
-1️⃣ Install Dependencies
+### 1️⃣ Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 
 ```
 
-2️⃣ Run the Pipeline
+### 2️⃣ Run the Pipeline
 
 ```bash
 python run_pipeline.py
@@ -119,6 +119,7 @@ The pipeline utilizes a robust suite of methods:
 *Note: This repository is intended for academic research in Quantitative Linguistics and Digital Humanities.*
 
 ```
+
 
 
 
