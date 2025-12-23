@@ -17,8 +17,9 @@ The core objective is to determine if the **linguistic–statistical regularitie
 
 ---
 
-🏗️ Project Structure
+## 🏗️ Project Structure
 
+```text
 project_root/
 │
 ├── data/
@@ -122,3 +123,4 @@ The pipeline utilizes a robust suite of methods:
 ---
 
 ```
+
