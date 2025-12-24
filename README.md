@@ -12,7 +12,7 @@ The core objective is to determine if the **linguistic–statistical regularitie
 
 ## 🔬 Key Scientific Findings
 * **Zipf’s Law:** Near-perfect fit ($R^2 = 0.9972$), indicating a highly optimized linguistic distribution.
-* **Long-Range Dependency:** A high **Hurst Exponent (0.884)**, suggesting a deep structural "memory" across the entire text.
+* **Long-Range Dependency:** A high **Hurst Exponent (0.914)**, suggesting a deep structural "memory" across the entire text.
 * **Orthographic Integrity:** 5,000+ Null-model simulations (p-value < 0.001) prove that the distribution of diacritics is statistically distinct from random or post-hoc additions.
 
 ---
@@ -117,6 +117,7 @@ The pipeline utilizes a robust suite of methods:
 ---
 
 *Note: This repository is intended for academic research in Quantitative Linguistics and Digital Humanities.*
+
 
 
 
